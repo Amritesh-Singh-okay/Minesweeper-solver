@@ -1,7 +1,11 @@
 import pyautogui
 import cv2 as cv
+import time 
+
+time.sleep(3)
 
 # 578,212,748,699 for complete board
+# 576,286,750,625 for pixel perfect board
 
 board = pyautogui.screenshot('game.png',region=[578,287,748,624])
 # print(board)
