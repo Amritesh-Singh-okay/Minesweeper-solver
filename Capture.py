@@ -74,6 +74,15 @@ def check_patch(img, cx, cy, low, high, size=21):
 
     return np.any(mask == 255)   # ANY pixel match
            
+for x in range(24):
+    for y in range(20):
+        cx = x*31 + 15
+        cy = y*31 + 15
+
+        for low, high, draw_color in colors:
+            if check_patch(img, cx, cy, low, high):
+                cv.circle(img, (cx, cy), 8, draw_color, -1)
+                break
 
 cv.imshow("Display window", img)
 k = cv.waitKey(0)
