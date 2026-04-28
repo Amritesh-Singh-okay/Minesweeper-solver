@@ -18,47 +18,36 @@ for x in range(24):
     for y in range(20):
         cv.rectangle(img,(x*31,y*31),((x*31)+31,(y*31)+31),(0, 0, 0),1)
 
+
 lower = [72, 208, 161]
 upper = [82, 216, 171]
 
-for x in range(24):
-    for y in range(20):
-        cood = img[(y*31)+5][(x*31)+5]
-        if(lower[0] <= cood[0] <= upper[0] and
-        lower[1] <= cood[1] <= upper[1] and
-        lower[2] <= cood[2] <= upper[2]):
-            
-            cv.rectangle(img,(x*31,y*31),((x*31)+31,(y*31)+31),(0, 255, 0),2)
-        else:
-
-            cv.rectangle(img,(x*31,y*31),((x*31)+31,(y*31)+31),(0, 0, 255),2)
-
-# color_1 (safe wide range)
+# color_1
 lower_1 = (185, 95, 5)
 upper_1 = (235, 145, 55)
 
-# color_2 (tightened slightly)
+# color_2
 lower_2 = (40, 125, 40)
 upper_2 = (80, 165, 75)
 
-# color_3 (keep narrow to avoid clash with 4)
+# color_3
 lower_3 = (35, 35, 200)
 upper_3 = (65, 65, 235)
 
-# color_4 (tightened to avoid 3)
+# color_4
 lower_4 = (145, 20, 110)
 upper_4 = (175, 50, 140)
 
-# color_5 (safe, high contrast)
+# color_5
 lower_5 = (0, 125, 235)
 upper_5 = (20, 165, 255)
 
 colors = [
-    (lower_1, upper_1, (210,118,25)),  # color 1
-    (lower_2, upper_2, (60,142,56)),   # color 2
-    (lower_3, upper_3, (47,47,211)),   # color 3
-    (lower_4, upper_4, (162,31,123)),  # color 4
-    (lower_5, upper_5, (0,143,255))    # color 5
+    (lower_1, upper_1, (210,118,25),1),  # color 1
+    (lower_2, upper_2, (60,142,56),2),   # color 2
+    (lower_3, upper_3, (47,47,211),3),   # color 3
+    (lower_4, upper_4, (162,31,123),4),  # color 4
+    (lower_5, upper_5, (0,143,255),5)    # color 5
 ]
 
 def check_patch(img, cx, cy, low, high, size=21):
@@ -73,16 +62,33 @@ def check_patch(img, cx, cy, low, high, size=21):
     mask = cv.inRange(patch, np.array(low), np.array(high))
 
     return np.any(mask == 255)   # ANY pixel match
-           
-for x in range(24):
-    for y in range(20):
-        cx = x*31 + 15
-        cy = y*31 + 15
 
-        for low, high, draw_color in colors:
-            if check_patch(img, cx, cy, low, high):
-                cv.circle(img, (cx, cy), 8, draw_color, -1)
-                break
+arr = []
+for x in range(24):
+    row = []
+    for y in range(20):
+        cood = img[(y*31)+5][(x*31)+5]
+        if(lower[0] <= cood[0] <= upper[0] and lower[1] <= cood[1] <= upper[1] and lower[2] <= cood[2] <= upper[2]):
+            row.append(-1)
+            cv.rectangle(img,(x*31,y*31),((x*31)+31,(y*31)+31),(0, 255, 0),2)
+        else:
+            cv.rectangle(img,(x*31,y*31),((x*31)+31,(y*31)+31),(0, 0, 255),2)
+            cx = x*31 + 15
+            cy = y*31 + 15
+
+            for low, high, draw_color,nums_mines in colors:
+                if check_patch(img, cx, cy, low, high):
+                    row.append(nums_mines)
+                    cv.circle(img, (cx, cy), 8, draw_color, -1)
+                    break
+            else:
+                row.append(0)
+    arr.append(row)
+
+arr = list(map(list, zip(*arr)))
+
+for row in arr:
+    print(" ".join(f"{x:2}" for x in row))
 
 cv.imshow("Display window", img)
 k = cv.waitKey(0)
