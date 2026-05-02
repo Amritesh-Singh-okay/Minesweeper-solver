@@ -113,6 +113,7 @@ for y in range(20):
 
 
 mine_points = set()
+click_points = set()
 
 for y in range(20):
 
@@ -121,6 +122,7 @@ for y in range(20):
         if arr[y][x]>0:
 
             unrevealed_count = 0
+            mine_count = 0
 
             for dy in range(-1, 2):
 
@@ -136,8 +138,11 @@ for y in range(20):
 
                         if arr[ny][nx]==-1:
                             unrevealed_count+=1
+                        
+                        if arr[ny][nx]==-2:
+                            mine_count += 1
 
-            if unrevealed_count==arr[y][x]:
+            if mine_count + unrevealed_count==arr[y][x]:
 
                 for dy in range(-1, 2):
 
@@ -155,9 +160,35 @@ for y in range(20):
                                 cx = int(nx * CELL_W + CELL_W / 2)
                                 cy = int(ny * CELL_H + CELL_H / 2)
                                 mine_points.add((cx+578, cy+287))
-                                print("cx = ",cx+578,"cy = ",cy+287)
+                                arr[ny][nx]=-2
+                                # print("cx = ",cx+578,"cy = ",cy+287)
 
-print(mine_points)
+            if mine_count == arr[y][x]:
+
+                for dy in range(-1,2):
+
+                    for dx in range(-1,2):
+
+                        if dx == 0 and dy == 0:
+                            continue
+
+                        nx = x+dx
+                        ny = y+dy
+
+                        if 0 <=nx < 24 and 0 <= ny < 20:
+
+                            if arr[ny][nx]==-1:
+                                cx = int(nx * CELL_W + CELL_W / 2)
+                                cy = int(ny * CELL_H + CELL_H / 2)
+                                click_points.add((cx+578,cy+287))
+                                # print("cx = ",cx+578,"cy = ",cy+287)
+
+
+
+
+
+# print(mine_points)
+print(click_points)
 
 for x, y in mine_points:
 
@@ -166,6 +197,17 @@ for x, y in mine_points:
     gy = int((y-287)/CELL_H)
     arr[gy][gx] = -2
     pyautogui.rightClick(x, y)
+    time.sleep(0.2)
+
+time.sleep(2)
+
+for x, y in click_points:
+
+    #to get the x and y for arr 
+    # gx = int((x-578)/CELL_W)
+    # gy = int((y-287)/CELL_H)
+    # arr[gy][gx] = -2
+    pyautogui.click(x,y)
     time.sleep(0.2)
 
 
