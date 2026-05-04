@@ -114,13 +114,13 @@ for y in range(20):
 
 mine_points = set()
 click_points = set()
-
+constraints_list = list()
 for y in range(20):
 
     for x in range(24):
 
         if arr[y][x]>0:
-
+            cells = set()
             unrevealed_count = 0
             mine_count = 0
 
@@ -138,9 +138,13 @@ for y in range(20):
 
                         if arr[ny][nx]==-1:
                             unrevealed_count+=1
+                            cells.add((ny,nx))
                         
                         if arr[ny][nx]==-2:
                             mine_count += 1
+
+            mine = arr[y][x]-mine_count
+            constraints_list.append((cells,mine))
 
             if mine_count + unrevealed_count==arr[y][x]:
 
@@ -182,6 +186,25 @@ for y in range(20):
                                 cy = int(ny * CELL_H + CELL_H / 2)
                                 click_points.add((cx+578,cy+287))
                                 # print("cx = ",cx+578,"cy = ",cy+287)
+
+for A in constraints_list:
+    for B in constraints_list:
+        if A!=B:
+            if A[0].issubset(B[0]):
+                New_cell = B[0]-A[0]
+                New_count = B[1]-A[1]
+                if New_count==0:
+                    for ny,nx in New_cell:
+                        cx = int(nx * CELL_W + CELL_W / 2)
+                        cy = int(ny * CELL_H + CELL_H / 2)
+                        click_points.add((cx+578,cy+287))
+                        print("cx = ",cx+578,"cy = ",cy+287)
+                if New_count == len(New_cell):
+                    for ny,nx in New_cell:
+                        cx = int(nx * CELL_W + CELL_W / 2)
+                        cy = int(ny * CELL_H + CELL_H / 2)
+                        mine_points.add((cx+578,cy+287))
+                        print("cx = ",cx+578,"cy = ",cy+287)
 
 
 
