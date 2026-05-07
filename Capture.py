@@ -31,24 +31,28 @@ upper = [82, 216, 171]
 
 # bgr ranges for each number color on revealed cells need to add 6 7
 # color_1
-lower_1 = (185, 95, 5)
-upper_1 = (235, 145, 55)
+lower_1 = (198,106,13)
+upper_1 = (222,130,37)
 
 # color_2
-lower_2 = (40, 125, 40)
-upper_2 = (80, 165, 75)
+lower_2 = (48,130,44)
+upper_2 = (72,154,68)
 
 # color_3
-lower_3 = (35, 35, 200)
-upper_3 = (65, 65, 235)
+lower_3 = (35,35,199)
+upper_3 = (59,59,223)
 
 # color_4
-lower_4 = (145, 20, 110)
-upper_4 = (175, 50, 140)
+lower_4 = (150,19,111)
+upper_4 = (174,43,135)
 
 # color_5
-lower_5 = (0, 125, 235)
-upper_5 = (20, 165, 255)
+lower_5 = (0,131,243)
+upper_5 = (12,155,255)
+
+# flag 
+lower_flag = (0,38,222)
+upper_flag = (27,74,255)
 
 # (low, high, draw_color, cell_value) for each no.
 colors = [
@@ -85,18 +89,25 @@ for y in range(20):
 
         x1, y1 = int(x * CELL_W), int(y * CELL_H)
         x2, y2 = int((x+1) * CELL_W), int((y+1) * CELL_H)
-        cood = img[int(y * CELL_H) + 5][int(x * CELL_W) + 5]
+        # cood = img[int(y * CELL_H) + 5][int(x * CELL_W) + 5]
+        cx = int(x * CELL_W + CELL_W / 2)
+        cy = int(y * CELL_H + CELL_H / 2)
 
-        if(lower[0] <= cood[0] <= upper[0] and lower[1] <= cood[1] <= upper[1] and lower[2] <= cood[2] <= upper[2]):
+        if check_patch(img, cx, cy, lower, upper):
 
             row.append(-1)
             cv.rectangle(img, (x1, y1), (x2, y2), (0, 255, 0), 2)
+        
+        elif check_patch(img,cx,cy,lower_flag,upper_flag):
+            row.append(-2)
+            cv.rectangle(img, (x1, y1), (x2, y2), (255, 255, 255), 2)
+
 
         else:
 
             cv.rectangle(img, (x1, y1), (x2, y2), (0, 0, 255), 2)
-            cx = int(x * CELL_W + CELL_W / 2)
-            cy = int(y * CELL_H + CELL_H / 2)
+            # cx = int(x * CELL_W + CELL_W / 2)
+            # cy = int(y * CELL_H + CELL_H / 2)
 
             for low, high, draw_color,cell_value in colors:
 
@@ -206,11 +217,8 @@ for A in constraints_list:
                         mine_points.add((cx+578,cy+287))
                         print("cx = ",cx+578,"cy = ",cy+287)
 
-
-
-
-
 # print(mine_points)
+click_points -= mine_points
 print(click_points)
 
 for x, y in mine_points:
@@ -226,10 +234,7 @@ time.sleep(2)
 
 for x, y in click_points:
 
-    #to get the x and y for arr 
-    # gx = int((x-578)/CELL_W)
-    # gy = int((y-287)/CELL_H)
-    # arr[gy][gx] = -2
+    # to get the x and y for arr 
     pyautogui.click(x,y)
     time.sleep(0.2)
 
