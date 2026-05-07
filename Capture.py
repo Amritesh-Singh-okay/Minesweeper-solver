@@ -8,22 +8,20 @@ time.sleep(3)
 # 578,212,748,699 for complete board
 # 576,286,750,625 for pixel perfect board
 
-board = pyautogui.screenshot('game.png',region=[578,287,749,625])
-# print(board)
+# checks a small patch around (cx,cy) for a color returns true if any pixel matches
+def check_patch(img, cx, cy, low, high, size=21):
+    half = size // 2
+    h, w = img.shape[:2]
 
-img = cv.imread("D:/code/Python/Minesweeper/game.png")
+    # skip if patch goes out of img
+    if (cx - half < 0) or (cy - half < 0) or (cx + half >= w) or (cy + half >= h):
+        return False
 
-CELL_W = 749 / 24 #31.20
-CELL_H = 625 / 20 #31.25
+    patch = img[cy-half:cy+half+1, cx-half:cx+half+1]
 
-# there is a small error because i cant use decimal val in there it should be 31.24 smt 
-# above error is fixed with cell_w and cell_h and use of int(x * CELL_W) .....
-for y in range(20):
-    for x in range(24):
+    mask = cv.inRange(patch, np.array(low), np.array(high))
 
-        x1, y1 = int(x * CELL_W), int(y * CELL_H)
-        x2, y2 = int((x+1) * CELL_W), int((y+1) * CELL_H)
-        cv.rectangle(img, (x1, y1), (x2, y2), (0, 0, 0), 1)
+    return np.any(mask == 255)   # ANY pixel match
 
 # bgr range for unrevealed cell color
 lower = [72, 208, 161]
@@ -50,7 +48,12 @@ upper_4 = (174,43,135)
 lower_5 = (0,131,243)
 upper_5 = (12,155,255)
 
+# color_6
+lower_6 = (157,141,0)
+upper_6 = (177,161,10)
+
 # flag 
+# rgb(242, 54, 7)
 lower_flag = (0,38,222)
 upper_flag = (27,74,255)
 
@@ -60,106 +63,87 @@ colors = [
     (lower_2, upper_2, (60,142,56),2),
     (lower_3, upper_3, (47,47,211),3),
     (lower_4, upper_4, (162,31,123),4),
-    (lower_5, upper_5, (0,143,255),5)
+    (lower_5, upper_5, (0,143,255),5),
+    (lower_6, upper_6, (167,151,0), 6)
 ]
 
-# checks a small patch around (cx,cy) for a color returns true if any pixel matches
-def check_patch(img, cx, cy, low, high, size=21):
-    half = size // 2
-    h, w = img.shape[:2]
+CELL_W = 749 / 24 #31.20
+CELL_H = 625 / 20 #31.25
 
-    # skip if patch goes out of img
-    if (cx - half < 0) or (cy - half < 0) or (cx + half >= w) or (cy + half >= h):
-        return False
-
-    patch = img[cy-half:cy+half+1, cx-half:cx+half+1]
-
-    mask = cv.inRange(patch, np.array(low), np.array(high))
-
-    return np.any(mask == 255)   # ANY pixel match
-
-arr = []
-
-# only to make arr and put unrevealed  = -1 and revealed(with mine no.) = 1-5 empty = 0
-for y in range(20):
-
-    row = []
-
-    for x in range(24):
-
-        x1, y1 = int(x * CELL_W), int(y * CELL_H)
-        x2, y2 = int((x+1) * CELL_W), int((y+1) * CELL_H)
-        # cood = img[int(y * CELL_H) + 5][int(x * CELL_W) + 5]
-        cx = int(x * CELL_W + CELL_W / 2)
-        cy = int(y * CELL_H + CELL_H / 2)
-
-        if check_patch(img, cx, cy, lower, upper):
-
-            row.append(-1)
-            cv.rectangle(img, (x1, y1), (x2, y2), (0, 255, 0), 2)
-        
-        elif check_patch(img,cx,cy,lower_flag,upper_flag):
-            row.append(-2)
-            cv.rectangle(img, (x1, y1), (x2, y2), (255, 255, 255), 2)
+changed = True
 
 
-        else:
 
-            cv.rectangle(img, (x1, y1), (x2, y2), (0, 0, 255), 2)
-            # cx = int(x * CELL_W + CELL_W / 2)
-            # cy = int(y * CELL_H + CELL_H / 2)
+while changed:
+    changed = False
+    arr = []
 
-            for low, high, draw_color,cell_value in colors:
+    board = pyautogui.screenshot('game.png',region=[578,287,749,625])
+    # print(board)
 
-                if check_patch(img, cx, cy, low, high):
-                    row.append(cell_value)
-                    cv.circle(img, (cx, cy), 8, draw_color, -1)
-                    break
+    img = cv.imread("D:/code/Python/Minesweeper/game.png")
 
+    # there is a small error because i cant use decimal val in there it should be 31.24 smt 
+    # above error is fixed with cell_w and cell_h and use of int(x * CELL_W) .....
+    for y in range(20):
+        for x in range(24):
+
+            x1, y1 = int(x * CELL_W), int(y * CELL_H)
+            x2, y2 = int((x+1) * CELL_W), int((y+1) * CELL_H)
+            cv.rectangle(img, (x1, y1), (x2, y2), (0, 0, 0), 1)
+
+    # only to make arr and put unrevealed  = -1 and revealed(with mine no.) = 1-5 empty = 0
+    for y in range(20):
+
+        row = []
+
+        for x in range(24):
+
+            x1, y1 = int(x * CELL_W), int(y * CELL_H)
+            x2, y2 = int((x+1) * CELL_W), int((y+1) * CELL_H)
+            # cood = img[int(y * CELL_H) + 5][int(x * CELL_W) + 5]
+            cx = int(x * CELL_W + CELL_W / 2)
+            cy = int(y * CELL_H + CELL_H / 2)
+
+            if check_patch(img,cx,cy,lower_flag,upper_flag):
+                row.append(-2)
+                cv.rectangle(img, (x1, y1), (x2, y2), (255, 255, 255), 2)
+            
+            elif check_patch(img, cx, cy, lower, upper):
+                row.append(-1)
+                cv.rectangle(img, (x1, y1), (x2, y2), (0, 255, 0), 2)
+                
             else:
 
-                row.append(0)
+                cv.rectangle(img, (x1, y1), (x2, y2), (0, 0, 255), 2)
+                # cx = int(x * CELL_W + CELL_W / 2)
+                # cy = int(y * CELL_H + CELL_H / 2)
 
-    arr.append(row)
+                for low, high, draw_color,cell_value in colors:
+
+                    if check_patch(img, cx, cy, low, high):
+                        row.append(cell_value)
+                        cv.circle(img, (cx, cy), 8, draw_color, -1)
+                        break
+
+                else:
+
+                    row.append(0)
+
+        arr.append(row)
 
 
-mine_points = set()
-click_points = set()
-constraints_list = list()
-for y in range(20):
+    mine_points = set()
+    click_points = set()
+    constraints_list = list()
+    for y in range(20):
 
-    for x in range(24):
+        for x in range(24):
 
-        if arr[y][x]>0:
-            cells = set()
-            unrevealed_count = 0
-            mine_count = 0
-
-            for dy in range(-1, 2):
-
-                for dx in range(-1, 2):
-
-                    if dx == 0 and dy == 0:
-                        continue
-
-                    nx = x+dx
-                    ny = y+dy
-
-                    if 0 <= nx < 24 and 0 <= ny < 20:
-
-                        if arr[ny][nx]==-1:
-                            unrevealed_count+=1
-                            cells.add((ny,nx))
-                        
-                        if arr[ny][nx]==-2:
-                            mine_count += 1
-
-            mine = arr[y][x]-mine_count
-            
-            if cells:
-                constraints_list.append((cells,mine))
-
-            if mine_count + unrevealed_count==arr[y][x]:
+            if arr[y][x]>0:
+                cells = set()
+                unrevealed_count = 0
+                mine_count = 0
 
                 for dy in range(-1, 2):
 
@@ -174,71 +158,98 @@ for y in range(20):
                         if 0 <= nx < 24 and 0 <= ny < 20:
 
                             if arr[ny][nx]==-1:
-                                cx = int(nx * CELL_W + CELL_W / 2)
-                                cy = int(ny * CELL_H + CELL_H / 2)
-                                mine_points.add((cx+578, cy+287))
-                                arr[ny][nx]=-2
-                                # print("cx = ",cx+578,"cy = ",cy+287)
+                                unrevealed_count+=1
+                                cells.add((ny,nx))
+                            
+                            if arr[ny][nx]==-2:
+                                mine_count += 1
 
-            if mine_count == arr[y][x]:
+                mine = arr[y][x]-mine_count
 
-                for dy in range(-1,2):
+                if cells:
+                    constraints_list.append((cells,mine))
 
-                    for dx in range(-1,2):
+                if mine_count + unrevealed_count==arr[y][x]:
 
-                        if dx == 0 and dy == 0:
-                            continue
+                    for dy in range(-1, 2):
 
-                        nx = x+dx
-                        ny = y+dy
+                        for dx in range(-1, 2):
 
-                        if 0 <=nx < 24 and 0 <= ny < 20:
+                            if dx == 0 and dy == 0:
+                                continue
 
-                            if arr[ny][nx]==-1:
-                                cx = int(nx * CELL_W + CELL_W / 2)
-                                cy = int(ny * CELL_H + CELL_H / 2)
-                                click_points.add((cx+578,cy+287))
-                                # print("cx = ",cx+578,"cy = ",cy+287)
+                            nx = x+dx
+                            ny = y+dy
 
-for A in constraints_list:
-    for B in constraints_list:
-        if A!=B:
-            if A[0].issubset(B[0]):
-                New_cell = B[0]-A[0]
-                New_count = B[1]-A[1]
-                if New_count==0:
-                    for ny,nx in New_cell:
-                        cx = int(nx * CELL_W + CELL_W / 2)
-                        cy = int(ny * CELL_H + CELL_H / 2)
-                        click_points.add((cx+578,cy+287))
-                        print("cx = ",cx+578,"cy = ",cy+287)
-                if New_count == len(New_cell):
-                    for ny,nx in New_cell:
-                        cx = int(nx * CELL_W + CELL_W / 2)
-                        cy = int(ny * CELL_H + CELL_H / 2)
-                        mine_points.add((cx+578,cy+287))
-                        print("cx = ",cx+578,"cy = ",cy+287)
+                            if 0 <= nx < 24 and 0 <= ny < 20:
 
-# print(mine_points)
-click_points -= mine_points
-print(click_points)
+                                if arr[ny][nx]==-1:
+                                    cx = int(nx * CELL_W + CELL_W / 2)
+                                    cy = int(ny * CELL_H + CELL_H / 2)
+                                    mine_points.add((cx+578, cy+287))
+                                    changed = True
+                                    arr[ny][nx]=-2
+                                    # print("cx = ",cx+578,"cy = ",cy+287)
 
-for x, y in mine_points:
+                if mine_count == arr[y][x]:
 
-    #to get the x and y for arr 
-    gx = int((x-578)/CELL_W)
-    gy = int((y-287)/CELL_H)
-    arr[gy][gx] = -2
-    pyautogui.rightClick(x, y)
-    time.sleep(0.2)
+                    for dy in range(-1,2):
 
-time.sleep(2)
+                        for dx in range(-1,2):
 
-for x, y in click_points:
+                            if dx == 0 and dy == 0:
+                                continue
 
-    # to get the x and y for arr 
-    pyautogui.click(x,y)
-    time.sleep(0.2)
+                            nx = x+dx
+                            ny = y+dy
+
+                            if 0 <=nx < 24 and 0 <= ny < 20:
+
+                                if arr[ny][nx]==-1:
+                                    cx = int(nx * CELL_W + CELL_W / 2)
+                                    cy = int(ny * CELL_H + CELL_H / 2)
+                                    click_points.add((cx+578,cy+287))
+                                    changed = True
+                                    # print("cx = ",cx+578,"cy = ",cy+287)
+
+    for A in constraints_list:
+        for B in constraints_list:
+            if A!=B:
+                if A[0].issubset(B[0]):
+                    New_cell = B[0]-A[0]
+                    New_count = B[1]-A[1]
+                    if New_count==0:
+                        for ny,nx in New_cell:
+                            cx = int(nx * CELL_W + CELL_W / 2)
+                            cy = int(ny * CELL_H + CELL_H / 2)
+                            click_points.add((cx+578,cy+287))
+                            changed = True
+                            # print("cx = ",cx+578,"cy = ",cy+287)
+                    if New_count == len(New_cell):
+                        for ny,nx in New_cell:
+                            cx = int(nx * CELL_W + CELL_W / 2)
+                            cy = int(ny * CELL_H + CELL_H / 2)
+                            arr[ny][nx] = -2
+                            mine_points.add((cx+578,cy+287))
+                            changed = True
+                            # print("cx = ",cx+578,"cy = ",cy+287)
+
+    # print(mine_points)
+    click_points -= mine_points
+    # print(click_points)
+
+    for x, y in mine_points:
+
+        #to get the x and y for arr 
+        gx = int((x-578)/CELL_W)
+        gy = int((y-287)/CELL_H)
+        arr[gy][gx] = -2
+        pyautogui.rightClick(x, y)
+
+    for x, y in click_points:
+
+        # to get the x and y for arr 
+        pyautogui.click(x,y)
 
 
 cv.imshow("Display window", img)
