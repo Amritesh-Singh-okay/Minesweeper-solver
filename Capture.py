@@ -5,6 +5,8 @@ import numpy as np
 
 time.sleep(3)
 
+# TODOO: add probability-based guessing
+
 # 578,212,748,699 for complete board
 # 576,286,750,625 for pixel perfect board
 
@@ -23,37 +25,32 @@ def check_patch(img, cx, cy, low, high, size=21):
 
     return np.any(mask == 255)   # ANY pixel match
 
-# bgr range for unrevealed cell color
+# bgr range for unrevealed cell (green background)
 lower = [72, 208, 161]
 upper = [82, 216, 171]
 
-# bgr ranges for each number color on revealed cells need to add 6 7
-# color_1
+# bgr ranges for each number color on revealed cells
+# need to add 7
+ 
 lower_1 = (198,106,13)
 upper_1 = (222,130,37)
 
-# color_2
 lower_2 = (48,130,44)
 upper_2 = (72,154,68)
 
-# color_3
 lower_3 = (35,35,199)
 upper_3 = (59,59,223)
 
-# color_4
 lower_4 = (150,19,111)
 upper_4 = (174,43,135)
 
-# color_5
 lower_5 = (0,131,243)
 upper_5 = (12,155,255)
 
-# color_6
 lower_6 = (157,141,0)
 upper_6 = (177,161,10)
 
 # flag 
-# rgb(242, 54, 7)
 lower_flag = (0,38,222)
 upper_flag = (27,74,255)
 
@@ -70,21 +67,18 @@ colors = [
 CELL_W = 749 / 24 #31.20
 CELL_H = 625 / 20 #31.25
 
+# loop until solver finds nothing new to click or flag
 changed = True
-
-
-
 while changed:
     changed = False
     arr = []
 
+    # screenshot
     board = pyautogui.screenshot('game.png',region=[578,287,749,625])
-    # print(board)
 
     img = cv.imread("D:/code/Python/Minesweeper/game.png")
 
-    # there is a small error because i cant use decimal val in there it should be 31.24 smt 
-    # above error is fixed with cell_w and cell_h and use of int(x * CELL_W) .....
+    # draw grid lines on img for debug
     for y in range(20):
         for x in range(24):
 
@@ -92,7 +86,11 @@ while changed:
             x2, y2 = int((x+1) * CELL_W), int((y+1) * CELL_H)
             cv.rectangle(img, (x1, y1), (x2, y2), (0, 0, 0), 1)
 
-    # only to make arr and put unrevealed  = -1 and revealed(with mine no.) = 1-5 empty = 0
+
+    # build arr
+    # -2 = flag  -1 = unrevealed  0 = empty  1-6 = number
+    # check flag first then unrevealed then numbers then what left is empty
+    # why this order because flag also has green of unrevealed
     for y in range(20):
 
         row = []
@@ -116,8 +114,6 @@ while changed:
             else:
 
                 cv.rectangle(img, (x1, y1), (x2, y2), (0, 0, 255), 2)
-                # cx = int(x * CELL_W + CELL_W / 2)
-                # cy = int(y * CELL_H + CELL_H / 2)
 
                 for low, high, draw_color,cell_value in colors:
 
@@ -133,9 +129,11 @@ while changed:
         arr.append(row)
 
 
-    mine_points = set()
-    click_points = set()
-    constraints_list = list()
+    mine_points = set()         # screen coords to right-click (flag)
+    click_points = set()        # screen coords to left-click (safe)
+    constraints_list = list()   # (set of unrevealed neighbors, remaining mine count)
+
+    # basic solver
     for y in range(20):
 
         for x in range(24):
@@ -189,7 +187,6 @@ while changed:
                                     mine_points.add((cx+578, cy+287))
                                     changed = True
                                     arr[ny][nx]=-2
-                                    # print("cx = ",cx+578,"cy = ",cy+287)
 
                 if mine_count == arr[y][x]:
 
@@ -210,21 +207,25 @@ while changed:
                                     cy = int(ny * CELL_H + CELL_H / 2)
                                     click_points.add((cx+578,cy+287))
                                     changed = True
-                                    # print("cx = ",cx+578,"cy = ",cy+287)
 
+
+# subset solver
     for A in constraints_list:
         for B in constraints_list:
             if A!=B:
                 if A[0].issubset(B[0]):
                     New_cell = B[0]-A[0]
                     New_count = B[1]-A[1]
+
+                    # 0 mines in New_cell — all safe
                     if New_count==0:
                         for ny,nx in New_cell:
                             cx = int(nx * CELL_W + CELL_W / 2)
                             cy = int(ny * CELL_H + CELL_H / 2)
                             click_points.add((cx+578,cy+287))
                             changed = True
-                            # print("cx = ",cx+578,"cy = ",cy+287)
+
+                    # mines == cells — all mines
                     if New_count == len(New_cell):
                         for ny,nx in New_cell:
                             cx = int(nx * CELL_W + CELL_W / 2)
@@ -232,11 +233,9 @@ while changed:
                             arr[ny][nx] = -2
                             mine_points.add((cx+578,cy+287))
                             changed = True
-                            # print("cx = ",cx+578,"cy = ",cy+287)
 
-    # print(mine_points)
+
     click_points -= mine_points
-    # print(click_points)
 
     for x, y in mine_points:
 
@@ -248,7 +247,6 @@ while changed:
 
     for x, y in click_points:
 
-        # to get the x and y for arr 
         pyautogui.click(x,y)
 
 
