@@ -155,7 +155,9 @@ for y in range(20):
                             mine_count += 1
 
             mine = arr[y][x]-mine_count
-            constraints_list.append((cells,mine))
+            
+            if cells:
+                constraints_list.append((cells,mine))
 
             if mine_count + unrevealed_count==arr[y][x]:
 
