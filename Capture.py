@@ -2,6 +2,7 @@ import pyautogui
 import cv2 as cv
 import time 
 import numpy as np
+import random
 
 time.sleep(3)
 
@@ -66,6 +67,12 @@ colors = [
 
 CELL_W = 749 / 24 #31.20
 CELL_H = 625 / 20 #31.25
+
+cx = int(random.randint(0, 23) * CELL_W + CELL_W / 2)
+cy = int(random.randint(0, 19) * CELL_H + CELL_H / 2)
+pyautogui.click(cx+578,cy+287)
+
+time.sleep(1)
 
 # loop until solver finds nothing new to click or flag
 changed = 0
@@ -258,6 +265,8 @@ while changed != 1:
     if not click_points and not mine_points:
         changed = -1
 
+    # probability based solve
+
     if changed == -1:
 
         print("probability ran")
@@ -294,6 +303,7 @@ while changed != 1:
         gx = int((x-578)/CELL_W)
         gy = int((y-287)/CELL_H)
         arr[gy][gx] = -2
+
         pyautogui.rightClick(x, y)
 
     for x, y in click_points:
