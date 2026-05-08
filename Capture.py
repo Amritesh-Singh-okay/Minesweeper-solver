@@ -100,7 +100,7 @@ while changed:
 
             x1, y1 = int(x * CELL_W), int(y * CELL_H)
             x2, y2 = int((x+1) * CELL_W), int((y+1) * CELL_H)
-            # cood = img[int(y * CELL_H) + 5][int(x * CELL_W) + 5]
+
             cx = int(x * CELL_W + CELL_W / 2)
             cy = int(y * CELL_H + CELL_H / 2)
 
@@ -133,6 +133,7 @@ while changed:
     mine_points = set()         # screen coords to right-click (flag)
     click_points = set()        # screen coords to left-click (safe)
     constraints_list = list()   # (set of unrevealed neighbors, remaining mine count)
+    prob_map = dict()
 
     # basic solver
     for y in range(20):
@@ -159,6 +160,8 @@ while changed:
                             if arr[ny][nx]==-1:
                                 unrevealed_count+=1
                                 cells.add((ny,nx))
+                                prob_map.setdefault((ny,nx),[])
+
                             
                             if arr[ny][nx]==-2:
                                 mine_count += 1
@@ -167,6 +170,10 @@ while changed:
 
                 if cells:
                     constraints_list.append((cells,mine))
+
+                for key in cells:
+                    prob = mine/len(cells)
+                    prob_map.setdefault((key),[]).append(prob)
 
                 if mine_count + unrevealed_count==arr[y][x]:
 
@@ -246,7 +253,30 @@ while changed:
                 if arr[y][x]==-1:
                     cx = int(x * CELL_W + CELL_W / 2)
                     cy = int(y * CELL_H + CELL_H / 2)
-                    click_points.add((cx+578, cy+287))
+                    click_points.add((cx+578, cy+287))  
+
+    if changed == False:
+
+        best_cell = None
+        lowest = 9999
+
+        for cell,probs in prob_map.items():
+            prob = sum(probs)/len(probs)
+
+            if prob<=lowest:
+                lowest = prob
+                best_cell = cell
+        
+        x1, y1 = int(best_cell[1] * CELL_W), int(best_cell[0] * CELL_H)
+        x2, y2 = int((best_cell[1]+1) * CELL_W), int((best_cell[0]+1) * CELL_H)
+        cv.rectangle(img, (x1, y1), (x2, y2), (0, 165, 255), 2)
+
+        cx = int(best_cell[1] * CELL_W + CELL_W / 2)
+        cy = int(best_cell[0] * CELL_H + CELL_H / 2)
+
+        click_points.add((cx+578, cy+287))
+
+        changed = True
 
     click_points -= mine_points
 
