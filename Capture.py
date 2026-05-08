@@ -72,6 +72,7 @@ changed = True
 while changed:
     changed = False
     arr = []
+    flaged_mine_count = 0
 
     # screenshot
     board = pyautogui.screenshot('game.png',region=[578,287,749,625])
@@ -234,6 +235,18 @@ while changed:
                             mine_points.add((cx+578,cy+287))
                             changed = True
 
+    for y in range(20):
+        for x in range(24):
+            if arr[y][x] == -2:
+                flaged_mine_count += 1
+    
+    if flaged_mine_count == 99:
+        for y in range(20):
+            for x in range(24):
+                if arr[y][x]==-1:
+                    cx = int(x * CELL_W + CELL_W / 2)
+                    cy = int(y * CELL_H + CELL_H / 2)
+                    click_points.add((cx+578, cy+287))
 
     click_points -= mine_points
 
