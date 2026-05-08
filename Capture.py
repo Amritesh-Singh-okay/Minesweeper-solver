@@ -68,9 +68,9 @@ CELL_W = 749 / 24 #31.20
 CELL_H = 625 / 20 #31.25
 
 # loop until solver finds nothing new to click or flag
-changed = True
-while changed:
-    changed = False
+changed = 0
+while changed != 1:
+    changed = 1
     arr = []
     flaged_mine_count = 0
 
@@ -193,7 +193,7 @@ while changed:
                                     cx = int(nx * CELL_W + CELL_W / 2)
                                     cy = int(ny * CELL_H + CELL_H / 2)
                                     mine_points.add((cx+578, cy+287))
-                                    changed = True
+                                    changed = 0
                                     arr[ny][nx]=-2
 
                 if mine_count == arr[y][x]:
@@ -214,7 +214,7 @@ while changed:
                                     cx = int(nx * CELL_W + CELL_W / 2)
                                     cy = int(ny * CELL_H + CELL_H / 2)
                                     click_points.add((cx+578,cy+287))
-                                    changed = True
+                                    changed = 0
 
 
 # subset solver
@@ -231,7 +231,7 @@ while changed:
                             cx = int(nx * CELL_W + CELL_W / 2)
                             cy = int(ny * CELL_H + CELL_H / 2)
                             click_points.add((cx+578,cy+287))
-                            changed = True
+                            changed = 0
 
                     # mines == cells — all mines
                     if New_count == len(New_cell):
@@ -240,7 +240,7 @@ while changed:
                             cy = int(ny * CELL_H + CELL_H / 2)
                             arr[ny][nx] = -2
                             mine_points.add((cx+578,cy+287))
-                            changed = True
+                            changed = 0
 
     for y in range(20):
         for x in range(24):
@@ -255,28 +255,36 @@ while changed:
                     cy = int(y * CELL_H + CELL_H / 2)
                     click_points.add((cx+578, cy+287))  
 
-    if changed == False:
+    if not click_points and not mine_points:
+        changed = -1
+
+    if changed == -1:
+
+        print("probability ran")
 
         best_cell = None
         lowest = 9999
 
         for cell,probs in prob_map.items():
+
             prob = sum(probs)/len(probs)
 
             if prob<=lowest:
                 lowest = prob
                 best_cell = cell
         
-        x1, y1 = int(best_cell[1] * CELL_W), int(best_cell[0] * CELL_H)
-        x2, y2 = int((best_cell[1]+1) * CELL_W), int((best_cell[0]+1) * CELL_H)
-        cv.rectangle(img, (x1, y1), (x2, y2), (0, 165, 255), 2)
+        if best_cell is None:
+            changed = 1
+        else:
+            
+            print(best_cell,lowest)
 
-        cx = int(best_cell[1] * CELL_W + CELL_W / 2)
-        cy = int(best_cell[0] * CELL_H + CELL_H / 2)
+            cx = int(best_cell[1] * CELL_W + CELL_W / 2)
+            cy = int(best_cell[0] * CELL_H + CELL_H / 2)
 
-        click_points.add((cx+578, cy+287))
+            click_points.add((cx+578, cy+287))
 
-        changed = True
+            changed = 0
 
     click_points -= mine_points
 
