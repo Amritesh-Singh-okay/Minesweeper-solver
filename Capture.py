@@ -75,7 +75,9 @@ colors = [
 
 cx = int(random.randint(0, BOARD_COLS - 1) * CELL_W + CELL_W / 2)
 cy = int(random.randint(0, BOARD_ROWS - 1) * CELL_H + CELL_H / 2)
-pyautogui.click(cx + BOARD_REGION_LEFT, cy + BOARD_REGION_TOP)
+screen_x = cx + BOARD_REGION_LEFT
+screen_y = cy + BOARD_REGION_TOP
+pyautogui.click(screen_x, screen_y)
 
 time.sleep(1)
 
@@ -204,7 +206,9 @@ while changed != 1:
                                 if arr[ny][nx]==-1:
                                     cx = int(nx * CELL_W + CELL_W / 2)
                                     cy = int(ny * CELL_H + CELL_H / 2)
-                                    mine_points.add((cx + BOARD_REGION_LEFT, cy + BOARD_REGION_TOP))
+                                    screen_x = cx + BOARD_REGION_LEFT
+                                    screen_y = cy + BOARD_REGION_TOP
+                                    mine_points.add((screen_x, screen_y))
                                     changed = 0
                                     arr[ny][nx]=-2
 
@@ -225,7 +229,9 @@ while changed != 1:
                                 if arr[ny][nx]==-1:
                                     cx = int(nx * CELL_W + CELL_W / 2)
                                     cy = int(ny * CELL_H + CELL_H / 2)
-                                    click_points.add((cx + BOARD_REGION_LEFT, cy + BOARD_REGION_TOP))
+                                    screen_x = cx + BOARD_REGION_LEFT
+                                    screen_y = cy + BOARD_REGION_TOP
+                                    click_points.add((screen_x, screen_y))
                                     changed = 0
 
 
@@ -242,7 +248,9 @@ while changed != 1:
                         for ny,nx in New_cell:
                             cx = int(nx * CELL_W + CELL_W / 2)
                             cy = int(ny * CELL_H + CELL_H / 2)
-                            click_points.add((cx + BOARD_REGION_LEFT, cy + BOARD_REGION_TOP))
+                            screen_x = cx + BOARD_REGION_LEFT
+                            screen_y = cy + BOARD_REGION_TOP
+                            click_points.add((screen_x, screen_y))
                             changed = 0
 
                     # mines == cells — all mines
@@ -250,8 +258,10 @@ while changed != 1:
                         for ny,nx in New_cell:
                             cx = int(nx * CELL_W + CELL_W / 2)
                             cy = int(ny * CELL_H + CELL_H / 2)
+                            screen_x = cx + BOARD_REGION_LEFT
+                            screen_y = cy + BOARD_REGION_TOP
                             arr[ny][nx] = -2
-                            mine_points.add((cx + BOARD_REGION_LEFT, cy + BOARD_REGION_TOP))
+                            mine_points.add((screen_x, screen_y))
                             changed = 0
 
     for y in range(BOARD_ROWS):
@@ -265,7 +275,9 @@ while changed != 1:
                 if arr[y][x]==-1:
                     cx = int(x * CELL_W + CELL_W / 2)
                     cy = int(y * CELL_H + CELL_H / 2)
-                    click_points.add((cx + BOARD_REGION_LEFT, cy + BOARD_REGION_TOP))  
+                    screen_x = cx + BOARD_REGION_LEFT
+                    screen_y = cy + BOARD_REGION_TOP
+                    click_points.add((screen_x, screen_y))  
 
     if not click_points and not mine_points:
         changed = -1
@@ -295,25 +307,27 @@ while changed != 1:
 
             cx = int(best_cell[1] * CELL_W + CELL_W / 2)
             cy = int(best_cell[0] * CELL_H + CELL_H / 2)
+            screen_x = cx + BOARD_REGION_LEFT
+            screen_y = cy + BOARD_REGION_TOP
 
-            click_points.add((cx + BOARD_REGION_LEFT, cy + BOARD_REGION_TOP))
+            click_points.add((screen_x, screen_y))
 
             changed = 0
 
     click_points -= mine_points
 
-    for x, y in mine_points:
+    for screen_x, screen_y in mine_points:
 
         #to get the x and y for arr 
-        gx = int((x - BOARD_REGION_LEFT) / CELL_W)
-        gy = int((y - BOARD_REGION_TOP) / CELL_H)
+        gx = int((screen_x - BOARD_REGION_LEFT) / CELL_W)
+        gy = int((screen_y - BOARD_REGION_TOP) / CELL_H)
         arr[gy][gx] = -2
 
-        pyautogui.rightClick(x, y)
+        pyautogui.rightClick(screen_x, screen_y)
 
-    for x, y in click_points:
+    for screen_x, screen_y in click_points:
 
-        pyautogui.click(x,y)
+        pyautogui.click(screen_x, screen_y)
 
 
 cv.imshow("Display window", img)
