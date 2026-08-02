@@ -3,8 +3,14 @@ import cv2 as cv
 import time 
 import numpy as np
 import random
+from enum import Enum
 
 time.sleep(3)
+
+class SolverState(Enum):
+    FOUND_MOVES = 0    # moves found to click or flag
+    STUCK = -1         # no moves found, fallback to probability guess
+    DONE = 1           # game completed or no moves remaining, exit loop
 
 # Board configuration constants
 BOARD_COLS = 24
@@ -82,9 +88,9 @@ pyautogui.click(screen_x, screen_y)
 time.sleep(1)
 
 # loop until solver finds nothing new to click or flag
-changed = 0
-while changed != 1:
-    changed = 1
+state = SolverState.FOUND_MOVES
+while state != SolverState.DONE:
+    state = SolverState.DONE
     arr = []
     flaged_mine_count = 0
 
@@ -209,7 +215,7 @@ while changed != 1:
                                     screen_x = cx + BOARD_REGION_LEFT
                                     screen_y = cy + BOARD_REGION_TOP
                                     mine_points.add((screen_x, screen_y))
-                                    changed = 0
+                                    state = SolverState.FOUND_MOVES
                                     arr[ny][nx]=-2
 
                 if mine_count == arr[y][x]:
@@ -232,7 +238,7 @@ while changed != 1:
                                     screen_x = cx + BOARD_REGION_LEFT
                                     screen_y = cy + BOARD_REGION_TOP
                                     click_points.add((screen_x, screen_y))
-                                    changed = 0
+                                    state = SolverState.FOUND_MOVES
 
 
 # subset solver
@@ -251,7 +257,7 @@ while changed != 1:
                             screen_x = cx + BOARD_REGION_LEFT
                             screen_y = cy + BOARD_REGION_TOP
                             click_points.add((screen_x, screen_y))
-                            changed = 0
+                            state = SolverState.FOUND_MOVES
 
                     # mines == cells — all mines
                     if New_count == len(New_cell):
@@ -262,7 +268,7 @@ while changed != 1:
                             screen_y = cy + BOARD_REGION_TOP
                             arr[ny][nx] = -2
                             mine_points.add((screen_x, screen_y))
-                            changed = 0
+                            state = SolverState.FOUND_MOVES
 
     for y in range(BOARD_ROWS):
         for x in range(BOARD_COLS):
@@ -280,11 +286,11 @@ while changed != 1:
                     click_points.add((screen_x, screen_y))  
 
     if not click_points and not mine_points:
-        changed = -1
+        state = SolverState.STUCK
 
     # probability based solve
 
-    if changed == -1:
+    if state == SolverState.STUCK:
 
         print("probability ran")
 
@@ -300,7 +306,7 @@ while changed != 1:
                 best_cell = cell
         
         if best_cell is None:
-            changed = 1
+            state = SolverState.DONE
         else:
             
             print(best_cell,lowest)
@@ -312,7 +318,7 @@ while changed != 1:
 
             click_points.add((screen_x, screen_y))
 
-            changed = 0
+            state = SolverState.FOUND_MOVES
 
     click_points -= mine_points
 
