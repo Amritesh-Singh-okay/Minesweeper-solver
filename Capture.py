@@ -6,10 +6,18 @@ import random
 
 time.sleep(3)
 
-# TODOO: add probability-based guessing
+# Board configuration constants
+BOARD_COLS = 24
+BOARD_ROWS = 20
+TOTAL_MINES = 99
 
-# 578,212,748,699 for complete board
-# 576,286,750,625 for pixel perfect board
+BOARD_REGION_LEFT = 578
+BOARD_REGION_TOP = 287
+BOARD_REGION_WIDTH = 749
+BOARD_REGION_HEIGHT = 625
+
+CELL_W = BOARD_REGION_WIDTH / BOARD_COLS
+CELL_H = BOARD_REGION_HEIGHT / BOARD_ROWS
 
 # checks a small patch around (cx,cy) for a color returns true if any pixel matches
 def check_patch(img, cx, cy, low, high, size=21):
@@ -65,12 +73,9 @@ colors = [
     (lower_6, upper_6, (167,151,0), 6)
 ]
 
-CELL_W = 749 / 24 #31.20
-CELL_H = 625 / 20 #31.25
-
-cx = int(random.randint(0, 23) * CELL_W + CELL_W / 2)
-cy = int(random.randint(0, 19) * CELL_H + CELL_H / 2)
-pyautogui.click(cx+578,cy+287)
+cx = int(random.randint(0, BOARD_COLS - 1) * CELL_W + CELL_W / 2)
+cy = int(random.randint(0, BOARD_ROWS - 1) * CELL_H + CELL_H / 2)
+pyautogui.click(cx + BOARD_REGION_LEFT, cy + BOARD_REGION_TOP)
 
 time.sleep(1)
 
@@ -82,13 +87,13 @@ while changed != 1:
     flaged_mine_count = 0
 
     # screenshot
-    board = pyautogui.screenshot('game.png',region=[578,287,749,625])
+    board = pyautogui.screenshot('game.png', region=[BOARD_REGION_LEFT, BOARD_REGION_TOP, BOARD_REGION_WIDTH, BOARD_REGION_HEIGHT])
 
     img = cv.imread("D:/code/Python/Minesweeper/game.png")
 
     # draw grid lines on img for debug
-    for y in range(20):
-        for x in range(24):
+    for y in range(BOARD_ROWS):
+        for x in range(BOARD_COLS):
 
             x1, y1 = int(x * CELL_W), int(y * CELL_H)
             x2, y2 = int((x+1) * CELL_W), int((y+1) * CELL_H)
@@ -99,11 +104,11 @@ while changed != 1:
     # -2 = flag  -1 = unrevealed  0 = empty  1-6 = number
     # check flag first then unrevealed then numbers then what left is empty
     # why this order because flag also has green of unrevealed
-    for y in range(20):
+    for y in range(BOARD_ROWS):
 
         row = []
 
-        for x in range(24):
+        for x in range(BOARD_COLS):
 
             x1, y1 = int(x * CELL_W), int(y * CELL_H)
             x2, y2 = int((x+1) * CELL_W), int((y+1) * CELL_H)
@@ -143,9 +148,9 @@ while changed != 1:
     prob_map = dict()
 
     # basic solver
-    for y in range(20):
+    for y in range(BOARD_ROWS):
 
-        for x in range(24):
+        for x in range(BOARD_COLS):
 
             if arr[y][x]>0:
                 cells = set()
@@ -162,7 +167,7 @@ while changed != 1:
                         nx = x+dx
                         ny = y+dy
 
-                        if 0 <= nx < 24 and 0 <= ny < 20:
+                        if 0 <= nx < BOARD_COLS and 0 <= ny < BOARD_ROWS:
 
                             if arr[ny][nx]==-1:
                                 unrevealed_count+=1
@@ -194,12 +199,12 @@ while changed != 1:
                             nx = x+dx
                             ny = y+dy
 
-                            if 0 <= nx < 24 and 0 <= ny < 20:
+                            if 0 <= nx < BOARD_COLS and 0 <= ny < BOARD_ROWS:
 
                                 if arr[ny][nx]==-1:
                                     cx = int(nx * CELL_W + CELL_W / 2)
                                     cy = int(ny * CELL_H + CELL_H / 2)
-                                    mine_points.add((cx+578, cy+287))
+                                    mine_points.add((cx + BOARD_REGION_LEFT, cy + BOARD_REGION_TOP))
                                     changed = 0
                                     arr[ny][nx]=-2
 
@@ -215,12 +220,12 @@ while changed != 1:
                             nx = x+dx
                             ny = y+dy
 
-                            if 0 <=nx < 24 and 0 <= ny < 20:
+                            if 0 <= nx < BOARD_COLS and 0 <= ny < BOARD_ROWS:
 
                                 if arr[ny][nx]==-1:
                                     cx = int(nx * CELL_W + CELL_W / 2)
                                     cy = int(ny * CELL_H + CELL_H / 2)
-                                    click_points.add((cx+578,cy+287))
+                                    click_points.add((cx + BOARD_REGION_LEFT, cy + BOARD_REGION_TOP))
                                     changed = 0
 
 
@@ -237,7 +242,7 @@ while changed != 1:
                         for ny,nx in New_cell:
                             cx = int(nx * CELL_W + CELL_W / 2)
                             cy = int(ny * CELL_H + CELL_H / 2)
-                            click_points.add((cx+578,cy+287))
+                            click_points.add((cx + BOARD_REGION_LEFT, cy + BOARD_REGION_TOP))
                             changed = 0
 
                     # mines == cells — all mines
@@ -246,21 +251,21 @@ while changed != 1:
                             cx = int(nx * CELL_W + CELL_W / 2)
                             cy = int(ny * CELL_H + CELL_H / 2)
                             arr[ny][nx] = -2
-                            mine_points.add((cx+578,cy+287))
+                            mine_points.add((cx + BOARD_REGION_LEFT, cy + BOARD_REGION_TOP))
                             changed = 0
 
-    for y in range(20):
-        for x in range(24):
+    for y in range(BOARD_ROWS):
+        for x in range(BOARD_COLS):
             if arr[y][x] == -2:
                 flaged_mine_count += 1
     
-    if flaged_mine_count == 99:
-        for y in range(20):
-            for x in range(24):
+    if flaged_mine_count == TOTAL_MINES:
+        for y in range(BOARD_ROWS):
+            for x in range(BOARD_COLS):
                 if arr[y][x]==-1:
                     cx = int(x * CELL_W + CELL_W / 2)
                     cy = int(y * CELL_H + CELL_H / 2)
-                    click_points.add((cx+578, cy+287))  
+                    click_points.add((cx + BOARD_REGION_LEFT, cy + BOARD_REGION_TOP))  
 
     if not click_points and not mine_points:
         changed = -1
@@ -291,7 +296,7 @@ while changed != 1:
             cx = int(best_cell[1] * CELL_W + CELL_W / 2)
             cy = int(best_cell[0] * CELL_H + CELL_H / 2)
 
-            click_points.add((cx+578, cy+287))
+            click_points.add((cx + BOARD_REGION_LEFT, cy + BOARD_REGION_TOP))
 
             changed = 0
 
@@ -300,8 +305,8 @@ while changed != 1:
     for x, y in mine_points:
 
         #to get the x and y for arr 
-        gx = int((x-578)/CELL_W)
-        gy = int((y-287)/CELL_H)
+        gx = int((x - BOARD_REGION_LEFT) / CELL_W)
+        gy = int((y - BOARD_REGION_TOP) / CELL_H)
         arr[gy][gx] = -2
 
         pyautogui.rightClick(x, y)
