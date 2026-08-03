@@ -123,6 +123,7 @@ def parse_board(img: np.ndarray) -> list[list[int]]:
 
 # Applies basic constraint logic (flagging obvious mines & revealing obvious safe cells)
 def solve_basic(arr: list[list[int]]) -> tuple[set, set, list, dict]:
+    
     mine_points = set()
     click_points = set()
     constraints_list = []
@@ -188,6 +189,39 @@ def solve_basic(arr: list[list[int]]) -> tuple[set, set, list, dict]:
 
     return mine_points, click_points, constraints_list, prob_map
 
+# subset solver
+def solve_subset(constraints_list: list, arr: list[list[int]]) -> tuple[set, set]:
+    mine_points = set()
+    click_points = set()
+
+    for A in constraints_list:
+        for B in constraints_list:
+            if A != B:
+                if A[0].issubset(B[0]):
+                    New_cell = B[0] - A[0]
+                    New_count = B[1] - A[1]
+
+                    # 0 mines in New_cell — all safe
+                    if New_count == 0:
+                        for ny, nx in New_cell:
+                            cx = int(nx * CELL_W + CELL_W / 2)
+                            cy = int(ny * CELL_H + CELL_H / 2)
+                            screen_x = cx + BOARD_REGION_LEFT
+                            screen_y = cy + BOARD_REGION_TOP
+                            click_points.add((screen_x, screen_y))
+
+                    # mines == cells — all mines
+                    if New_count == len(New_cell):
+                        for ny, nx in New_cell:
+                            cx = int(nx * CELL_W + CELL_W / 2)
+                            cy = int(ny * CELL_H + CELL_H / 2)
+                            screen_x = cx + BOARD_REGION_LEFT
+                            screen_y = cy + BOARD_REGION_TOP
+                            arr[ny][nx] = -2
+                            mine_points.add((screen_x, screen_y))
+
+    return mine_points, click_points
+
 cx = int(random.randint(0, BOARD_COLS - 1) * CELL_W + CELL_W / 2)
 cy = int(random.randint(0, BOARD_ROWS - 1) * CELL_H + CELL_H / 2)
 screen_x = cx + BOARD_REGION_LEFT
@@ -213,35 +247,12 @@ while state != SolverState.DONE:
     if mine_points or click_points:
         state = SolverState.FOUND_MOVES
 
-
-# subset solver
-    for A in constraints_list:
-        for B in constraints_list:
-            if A!=B:
-                if A[0].issubset(B[0]):
-                    New_cell = B[0]-A[0]
-                    New_count = B[1]-A[1]
-
-                    # 0 mines in New_cell — all safe
-                    if New_count==0:
-                        for ny,nx in New_cell:
-                            cx = int(nx * CELL_W + CELL_W / 2)
-                            cy = int(ny * CELL_H + CELL_H / 2)
-                            screen_x = cx + BOARD_REGION_LEFT
-                            screen_y = cy + BOARD_REGION_TOP
-                            click_points.add((screen_x, screen_y))
-                            state = SolverState.FOUND_MOVES
-
-                    # mines == cells — all mines
-                    if New_count == len(New_cell):
-                        for ny,nx in New_cell:
-                            cx = int(nx * CELL_W + CELL_W / 2)
-                            cy = int(ny * CELL_H + CELL_H / 2)
-                            screen_x = cx + BOARD_REGION_LEFT
-                            screen_y = cy + BOARD_REGION_TOP
-                            arr[ny][nx] = -2
-                            mine_points.add((screen_x, screen_y))
-                            state = SolverState.FOUND_MOVES
+    # subset solver
+    sub_mine_points, sub_click_points = solve_subset(constraints_list, arr)
+    mine_points.update(sub_mine_points)
+    click_points.update(sub_click_points)
+    if sub_mine_points or sub_click_points:
+        state = SolverState.FOUND_MOVES
 
     for y in range(BOARD_ROWS):
         for x in range(BOARD_COLS):
