@@ -191,6 +191,7 @@ def solve_basic(arr: list[list[int]]) -> tuple[set, set, list, dict]:
 
 # subset solver
 def solve_subset(constraints_list: list, arr: list[list[int]]) -> tuple[set, set]:
+    # subset solver
     mine_points = set()
     click_points = set()
 
@@ -221,6 +222,33 @@ def solve_subset(constraints_list: list, arr: list[list[int]]) -> tuple[set, set
                             mine_points.add((screen_x, screen_y))
 
     return mine_points, click_points
+
+# probability based solve
+def guess_probabilistic(prob_map: dict) -> set:
+    print("probability ran")
+
+    best_cell = None
+    lowest = 9999
+
+    for cell, probs in prob_map.items():
+        prob = sum(probs) / len(probs)
+
+        if prob <= lowest:
+            lowest = prob
+            best_cell = cell
+
+    click_points = set()
+    if best_cell is not None:
+        print(best_cell, lowest)
+
+        cx = int(best_cell[1] * CELL_W + CELL_W / 2)
+        cy = int(best_cell[0] * CELL_H + CELL_H / 2)
+        screen_x = cx + BOARD_REGION_LEFT
+        screen_y = cy + BOARD_REGION_TOP
+
+        click_points.add((screen_x, screen_y))
+
+    return click_points
 
 cx = int(random.randint(0, BOARD_COLS - 1) * CELL_W + CELL_W / 2)
 cy = int(random.randint(0, BOARD_ROWS - 1) * CELL_H + CELL_H / 2)
@@ -273,36 +301,13 @@ while state != SolverState.DONE:
         state = SolverState.STUCK
 
     # probability based solve
-
     if state == SolverState.STUCK:
-
-        print("probability ran")
-
-        best_cell = None
-        lowest = 9999
-
-        for cell,probs in prob_map.items():
-
-            prob = sum(probs)/len(probs)
-
-            if prob<=lowest:
-                lowest = prob
-                best_cell = cell
-        
-        if best_cell is None:
-            state = SolverState.DONE
-        else:
-            
-            print(best_cell,lowest)
-
-            cx = int(best_cell[1] * CELL_W + CELL_W / 2)
-            cy = int(best_cell[0] * CELL_H + CELL_H / 2)
-            screen_x = cx + BOARD_REGION_LEFT
-            screen_y = cy + BOARD_REGION_TOP
-
-            click_points.add((screen_x, screen_y))
-
+        prob_clicks = guess_probabilistic(prob_map)
+        if prob_clicks:
+            click_points.update(prob_clicks)
             state = SolverState.FOUND_MOVES
+        else:
+            state = SolverState.DONE
 
     click_points -= mine_points
 
