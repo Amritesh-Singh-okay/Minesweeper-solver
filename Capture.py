@@ -83,6 +83,14 @@ colors = [
     (lower_6, upper_6, (167,151,0), 6)
 ]
 
+# Takes a screenshot of the board region and returns it
+def capture_board() -> np.ndarray:
+    pyautogui.screenshot(
+        str(GAME_IMG_PATH),
+        region=[BOARD_REGION_LEFT, BOARD_REGION_TOP, BOARD_REGION_WIDTH, BOARD_REGION_HEIGHT]
+    )
+    return cv.imread(str(GAME_IMG_PATH))
+
 cx = int(random.randint(0, BOARD_COLS - 1) * CELL_W + CELL_W / 2)
 cy = int(random.randint(0, BOARD_ROWS - 1) * CELL_H + CELL_H / 2)
 screen_x = cx + BOARD_REGION_LEFT
@@ -99,9 +107,7 @@ while state != SolverState.DONE:
     flaged_mine_count = 0
 
     # screenshot
-    board = pyautogui.screenshot(str(GAME_IMG_PATH), region=[BOARD_REGION_LEFT, BOARD_REGION_TOP, BOARD_REGION_WIDTH, BOARD_REGION_HEIGHT])
-
-    img = cv.imread(str(GAME_IMG_PATH))
+    img = capture_board()
 
     # draw grid lines on img for debug
     for y in range(BOARD_ROWS):
