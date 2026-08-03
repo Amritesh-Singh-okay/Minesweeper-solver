@@ -4,8 +4,12 @@ import time
 import numpy as np
 import random
 from enum import Enum
+from pathlib import Path
 
 time.sleep(3)
+
+# File paths
+GAME_IMG_PATH = Path(__file__).parent / "game.png"
 
 class SolverState(Enum):
     FOUND_MOVES = 0    # moves found to click or flag
@@ -95,9 +99,9 @@ while state != SolverState.DONE:
     flaged_mine_count = 0
 
     # screenshot
-    board = pyautogui.screenshot('game.png', region=[BOARD_REGION_LEFT, BOARD_REGION_TOP, BOARD_REGION_WIDTH, BOARD_REGION_HEIGHT])
+    board = pyautogui.screenshot(str(GAME_IMG_PATH), region=[BOARD_REGION_LEFT, BOARD_REGION_TOP, BOARD_REGION_WIDTH, BOARD_REGION_HEIGHT])
 
-    img = cv.imread("D:/code/Python/Minesweeper/game.png")
+    img = cv.imread(str(GAME_IMG_PATH))
 
     # draw grid lines on img for debug
     for y in range(BOARD_ROWS):
