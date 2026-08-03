@@ -91,6 +91,36 @@ def capture_board() -> np.ndarray:
     )
     return cv.imread(str(GAME_IMG_PATH))
 
+def parse_board(img: np.ndarray) -> list[list[int]]:
+    #Scans board image patches and constructs the 2D grid array (flag = 2, unrevealed = -1, empty = 0, number = 1-6)
+    arr = []
+    for y in range(BOARD_ROWS):
+        row = []
+        for x in range(BOARD_COLS):
+            x1, y1 = int(x * CELL_W), int(y * CELL_H)
+            x2, y2 = int((x + 1) * CELL_W), int((y + 1) * CELL_H)
+
+            cx = int(x * CELL_W + CELL_W / 2)
+            cy = int(y * CELL_H + CELL_H / 2)
+
+            if check_patch(img, cx, cy, lower_flag, upper_flag):
+                row.append(-2)
+                cv.rectangle(img, (x1, y1), (x2, y2), (255, 255, 255), 2)
+            elif check_patch(img, cx, cy, lower, upper):
+                row.append(-1)
+                cv.rectangle(img, (x1, y1), (x2, y2), (0, 255, 0), 2)
+            else:
+                cv.rectangle(img, (x1, y1), (x2, y2), (0, 0, 255), 2)
+                for low, high, draw_color, cell_value in colors:
+                    if check_patch(img, cx, cy, low, high):
+                        row.append(cell_value)
+                        cv.circle(img, (cx, cy), 8, draw_color, -1)
+                        break
+                else:
+                    row.append(0)
+        arr.append(row)
+    return arr
+
 cx = int(random.randint(0, BOARD_COLS - 1) * CELL_W + CELL_W / 2)
 cy = int(random.randint(0, BOARD_ROWS - 1) * CELL_H + CELL_H / 2)
 screen_x = cx + BOARD_REGION_LEFT
@@ -103,61 +133,13 @@ time.sleep(1)
 state = SolverState.FOUND_MOVES
 while state != SolverState.DONE:
     state = SolverState.DONE
-    arr = []
     flaged_mine_count = 0
 
     # screenshot
     img = capture_board()
 
-    # draw grid lines on img for debug
-    for y in range(BOARD_ROWS):
-        for x in range(BOARD_COLS):
-
-            x1, y1 = int(x * CELL_W), int(y * CELL_H)
-            x2, y2 = int((x+1) * CELL_W), int((y+1) * CELL_H)
-            cv.rectangle(img, (x1, y1), (x2, y2), (0, 0, 0), 1)
-
-
-    # build arr
-    # -2 = flag  -1 = unrevealed  0 = empty  1-6 = number
-    # check flag first then unrevealed then numbers then what left is empty
-    # why this order because flag also has green of unrevealed
-    for y in range(BOARD_ROWS):
-
-        row = []
-
-        for x in range(BOARD_COLS):
-
-            x1, y1 = int(x * CELL_W), int(y * CELL_H)
-            x2, y2 = int((x+1) * CELL_W), int((y+1) * CELL_H)
-
-            cx = int(x * CELL_W + CELL_W / 2)
-            cy = int(y * CELL_H + CELL_H / 2)
-
-            if check_patch(img,cx,cy,lower_flag,upper_flag):
-                row.append(-2)
-                cv.rectangle(img, (x1, y1), (x2, y2), (255, 255, 255), 2)
-            
-            elif check_patch(img, cx, cy, lower, upper):
-                row.append(-1)
-                cv.rectangle(img, (x1, y1), (x2, y2), (0, 255, 0), 2)
-                
-            else:
-
-                cv.rectangle(img, (x1, y1), (x2, y2), (0, 0, 255), 2)
-
-                for low, high, draw_color,cell_value in colors:
-
-                    if check_patch(img, cx, cy, low, high):
-                        row.append(cell_value)
-                        cv.circle(img, (cx, cy), 8, draw_color, -1)
-                        break
-
-                else:
-
-                    row.append(0)
-
-        arr.append(row)
+    # parse board matrix
+    arr = parse_board(img)
 
 
     mine_points = set()         # screen coords to right-click (flag)
