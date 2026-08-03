@@ -91,8 +91,8 @@ def capture_board() -> np.ndarray:
     )
     return cv.imread(str(GAME_IMG_PATH))
 
+#Scans board image patches and constructs the 2D grid array (flag = 2, unrevealed = -1, empty = 0, number = 1-6)
 def parse_board(img: np.ndarray) -> list[list[int]]:
-    #Scans board image patches and constructs the 2D grid array (flag = 2, unrevealed = -1, empty = 0, number = 1-6)
     arr = []
     for y in range(BOARD_ROWS):
         row = []
@@ -121,6 +121,73 @@ def parse_board(img: np.ndarray) -> list[list[int]]:
         arr.append(row)
     return arr
 
+# Applies basic constraint logic (flagging obvious mines & revealing obvious safe cells)
+def solve_basic(arr: list[list[int]]) -> tuple[set, set, list, dict]:
+    mine_points = set()
+    click_points = set()
+    constraints_list = []
+    prob_map = dict()
+
+    for y in range(BOARD_ROWS):
+        for x in range(BOARD_COLS):
+            if arr[y][x] > 0:
+                cells = set()
+                unrevealed_count = 0
+                mine_count = 0
+
+                for dy in range(-1, 2):
+                    for dx in range(-1, 2):
+                        if dx == 0 and dy == 0:
+                            continue
+                        nx, ny = x + dx, y + dy
+                        if 0 <= nx < BOARD_COLS and 0 <= ny < BOARD_ROWS:
+                            if arr[ny][nx] == -1:
+                                unrevealed_count += 1
+                                cells.add((ny, nx))
+                                prob_map.setdefault((ny, nx), [])
+                            if arr[ny][nx] == -2:
+                                mine_count += 1
+
+                mine = arr[y][x] - mine_count
+
+                if cells:
+                    constraints_list.append((cells, mine))
+
+                for key in cells:
+                    prob = mine / len(cells)
+                    prob_map.setdefault(key, []).append(prob)
+
+                if mine_count + unrevealed_count == arr[y][x]:
+                    for dy in range(-1, 2):
+                        for dx in range(-1, 2):
+                            if dx == 0 and dy == 0:
+                                continue
+                            nx, ny = x + dx, y + dy
+                            if 0 <= nx < BOARD_COLS and 0 <= ny < BOARD_ROWS:
+                                if arr[ny][nx] == -1:
+                                    cx = int(nx * CELL_W + CELL_W / 2)
+                                    cy = int(ny * CELL_H + CELL_H / 2)
+                                    screen_x = cx + BOARD_REGION_LEFT
+                                    screen_y = cy + BOARD_REGION_TOP
+                                    mine_points.add((screen_x, screen_y))
+                                    arr[ny][nx] = -2
+
+                if mine_count == arr[y][x]:
+                    for dy in range(-1, 2):
+                        for dx in range(-1, 2):
+                            if dx == 0 and dy == 0:
+                                continue
+                            nx, ny = x + dx, y + dy
+                            if 0 <= nx < BOARD_COLS and 0 <= ny < BOARD_ROWS:
+                                if arr[ny][nx] == -1:
+                                    cx = int(nx * CELL_W + CELL_W / 2)
+                                    cy = int(ny * CELL_H + CELL_H / 2)
+                                    screen_x = cx + BOARD_REGION_LEFT
+                                    screen_y = cy + BOARD_REGION_TOP
+                                    click_points.add((screen_x, screen_y))
+
+    return mine_points, click_points, constraints_list, prob_map
+
 cx = int(random.randint(0, BOARD_COLS - 1) * CELL_W + CELL_W / 2)
 cy = int(random.randint(0, BOARD_ROWS - 1) * CELL_H + CELL_H / 2)
 screen_x = cx + BOARD_REGION_LEFT
@@ -141,96 +208,10 @@ while state != SolverState.DONE:
     # parse board matrix
     arr = parse_board(img)
 
-
-    mine_points = set()         # screen coords to right-click (flag)
-    click_points = set()        # screen coords to left-click (safe)
-    constraints_list = list()   # (set of unrevealed neighbors, remaining mine count)
-    prob_map = dict()
-
     # basic solver
-    for y in range(BOARD_ROWS):
-
-        for x in range(BOARD_COLS):
-
-            if arr[y][x]>0:
-                cells = set()
-                unrevealed_count = 0
-                mine_count = 0
-
-                for dy in range(-1, 2):
-
-                    for dx in range(-1, 2):
-
-                        if dx == 0 and dy == 0:
-                            continue
-
-                        nx = x+dx
-                        ny = y+dy
-
-                        if 0 <= nx < BOARD_COLS and 0 <= ny < BOARD_ROWS:
-
-                            if arr[ny][nx]==-1:
-                                unrevealed_count+=1
-                                cells.add((ny,nx))
-                                prob_map.setdefault((ny,nx),[])
-
-                            
-                            if arr[ny][nx]==-2:
-                                mine_count += 1
-
-                mine = arr[y][x]-mine_count
-
-                if cells:
-                    constraints_list.append((cells,mine))
-
-                for key in cells:
-                    prob = mine/len(cells)
-                    prob_map.setdefault((key),[]).append(prob)
-
-                if mine_count + unrevealed_count==arr[y][x]:
-
-                    for dy in range(-1, 2):
-
-                        for dx in range(-1, 2):
-
-                            if dx == 0 and dy == 0:
-                                continue
-
-                            nx = x+dx
-                            ny = y+dy
-
-                            if 0 <= nx < BOARD_COLS and 0 <= ny < BOARD_ROWS:
-
-                                if arr[ny][nx]==-1:
-                                    cx = int(nx * CELL_W + CELL_W / 2)
-                                    cy = int(ny * CELL_H + CELL_H / 2)
-                                    screen_x = cx + BOARD_REGION_LEFT
-                                    screen_y = cy + BOARD_REGION_TOP
-                                    mine_points.add((screen_x, screen_y))
-                                    state = SolverState.FOUND_MOVES
-                                    arr[ny][nx]=-2
-
-                if mine_count == arr[y][x]:
-
-                    for dy in range(-1,2):
-
-                        for dx in range(-1,2):
-
-                            if dx == 0 and dy == 0:
-                                continue
-
-                            nx = x+dx
-                            ny = y+dy
-
-                            if 0 <= nx < BOARD_COLS and 0 <= ny < BOARD_ROWS:
-
-                                if arr[ny][nx]==-1:
-                                    cx = int(nx * CELL_W + CELL_W / 2)
-                                    cy = int(ny * CELL_H + CELL_H / 2)
-                                    screen_x = cx + BOARD_REGION_LEFT
-                                    screen_y = cy + BOARD_REGION_TOP
-                                    click_points.add((screen_x, screen_y))
-                                    state = SolverState.FOUND_MOVES
+    mine_points, click_points, constraints_list, prob_map = solve_basic(arr)
+    if mine_points or click_points:
+        state = SolverState.FOUND_MOVES
 
 
 # subset solver
