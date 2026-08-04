@@ -1,8 +1,46 @@
+import json
 from enum import Enum
 from pathlib import Path
 
 # File paths
-GAME_IMG_PATH = Path(__file__).parent.parent / "game.png"
+BASE_DIR = Path(__file__).parent.parent
+GAME_IMG_PATH = BASE_DIR / "game.png"
+CALIBRATION_PATH = BASE_DIR / "calibration.json"
+
+def load_calibration():
+    #loads board region coordinates from calibration.json offers recalibration too.
+    if not CALIBRATION_PATH.exists():
+        try:
+            from calibrate import calibrate
+            calibrate()
+        except Exception as e:
+            print(f"Calibration warning: {e}")
+    else:
+        try:
+            with open(CALIBRATION_PATH, "r") as f:
+                cal = json.load(f)
+            left, top, width, height = cal.get("left", 578), cal.get("top", 287), cal.get("width", 749), cal.get("height", 625)
+            print(f"\n Found saved calibration: Left={left}, Top={top}, Width={width}, Height={height}")
+            ans = input("   Press ENTER to use saved position, or type 'c' to recalibrate: ").strip().lower()
+            if ans == 'c':
+                from calibrate import calibrate
+                calibrate()
+        except Exception as e:
+            print(f"Calibration notice: {e}")
+
+    if CALIBRATION_PATH.exists():
+        try:
+            with open(CALIBRATION_PATH, "r") as f:
+                cal = json.load(f)
+                return (
+                    cal["left"],
+                    cal["top"],
+                    cal["width"],
+                    cal["height"]
+                )
+        except Exception:
+            pass
+    return 578, 287, 749, 625
 
 class SolverState(Enum):
     FOUND_MOVES = 0    # moves found to click or flag
@@ -14,10 +52,7 @@ BOARD_COLS = 24
 BOARD_ROWS = 20
 TOTAL_MINES = 99
 
-BOARD_REGION_LEFT = 578
-BOARD_REGION_TOP = 287
-BOARD_REGION_WIDTH = 749
-BOARD_REGION_HEIGHT = 625
+BOARD_REGION_LEFT, BOARD_REGION_TOP, BOARD_REGION_WIDTH, BOARD_REGION_HEIGHT = load_calibration()
 
 CELL_W = BOARD_REGION_WIDTH / BOARD_COLS
 CELL_H = BOARD_REGION_HEIGHT / BOARD_ROWS
