@@ -1,7 +1,9 @@
+import ctypes
 import cv2 as cv
 import pyautogui
 import time
 import random
+import winsound
 
 from solver.constants import (
     BOARD_COLS, BOARD_ROWS, TOTAL_MINES, BOARD_REGION_LEFT, BOARD_REGION_TOP,
@@ -10,9 +12,16 @@ from solver.constants import (
 from solver.vision import capture_board, parse_board
 from solver.solver import solve_basic, solve_subset, guess_probabilistic, execute_clicks
 
+VK_ESCAPE = 0x1B  # Virtual key code for ESC key
+
+    # exit solver when esc is pressed
+def is_escape_pressed():
+    return (ctypes.windll.user32.GetAsyncKeyState(VK_ESCAPE) & 0x8000) != 0
+
 def main():
     print("Starting Minesweeper solver in 5 seconds...")
     print("Please make sure the Minesweeper game window is visible on your screen!")
+    print(" Press ESC key at any time to stop the solver!")
     time.sleep(5)
 
     cx = int(random.randint(0, BOARD_COLS - 1) * CELL_W + CELL_W / 2)
@@ -26,6 +35,11 @@ def main():
     # loop until solver finds nothing new to click or flag
     state = SolverState.FOUND_MOVES
     while state != SolverState.DONE:
+        if is_escape_pressed():
+            print("\nESC key pressed! Exiting solver.")
+            winsound.Beep(800, 250)
+            break
+
         state = SolverState.DONE
         flaged_mine_count = 0
 
@@ -73,6 +87,11 @@ def main():
                 state = SolverState.FOUND_MOVES
             else:
                 state = SolverState.DONE
+
+        if is_escape_pressed():
+            print("\n🛑 EMERGENCY STOP: ESC key pressed! Exiting solver.")
+            winsound.Beep(800, 250)
+            break
 
         execute_clicks(mine_points, click_points, arr)
 
