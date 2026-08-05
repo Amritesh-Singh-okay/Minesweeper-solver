@@ -1,6 +1,9 @@
 import json
+import pyautogui
 from enum import Enum
 from pathlib import Path
+
+pyautogui.PAUSE = 0.07
 
 # File paths
 BASE_DIR = Path(__file__).parent.parent

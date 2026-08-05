@@ -33,7 +33,7 @@ def main():
     screen_y = cy + BOARD_REGION_TOP
     pyautogui.click(screen_x, screen_y)
 
-    time.sleep(1)
+    time.sleep(0.7)
 
     # loop until solver finds nothing new to click or flag
     state = SolverState.FOUND_MOVES
