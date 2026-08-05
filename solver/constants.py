@@ -47,10 +47,26 @@ class SolverState(Enum):
     STUCK = -1         # no moves found, fallback to probability guess
     DONE = 1           # game completed or no moves remaining, exit loop
 
-# Board configuration constants
-BOARD_COLS = 24
-BOARD_ROWS = 20
-TOTAL_MINES = 99
+DIFFICULTY_PRESETS = {
+    "1": {"name": "Easy", "cols": 10, "rows": 8, "mines": 10},
+    "2": {"name": "Medium", "cols": 18, "rows": 14, "mines": 40},
+    "3": {"name": "Expert", "cols": 24, "rows": 20, "mines": 99}
+}
+
+def get_difficulty():
+    print("\nSelect Difficulty:")
+    print("  [1] Easy   (10x8, 10 mines)")
+    print("  [2] Medium (18x14, 40 mines)")
+    print("  [3] Expert (24x20, 99 mines)")
+    choice = input("Choice [1-3] (default 3): ").strip()
+    preset = DIFFICULTY_PRESETS.get(choice, DIFFICULTY_PRESETS["3"])
+    print(f"Selected: {preset['name']} ({preset['cols']}x{preset['rows']}, {preset['mines']} mines)\n")
+    return preset
+
+diff_config = get_difficulty()
+BOARD_COLS = diff_config["cols"]
+BOARD_ROWS = diff_config["rows"]
+TOTAL_MINES = diff_config["mines"]
 
 BOARD_REGION_LEFT, BOARD_REGION_TOP, BOARD_REGION_WIDTH, BOARD_REGION_HEIGHT = load_calibration()
 
