@@ -11,18 +11,21 @@ from solver.constants import (
 )
 from solver.vision import capture_board, parse_board
 from solver.solver import solve_basic, solve_subset, guess_probabilistic, execute_clicks
+from solver.stats import record_game
 
 VK_ESCAPE = 0x1B  # Virtual key code for ESC key
 
-    # exit solver when esc is pressed
+# exit solver when esc is pressed
 def is_escape_pressed():
     return (ctypes.windll.user32.GetAsyncKeyState(VK_ESCAPE) & 0x8000) != 0
 
 def main():
     print("Starting Minesweeper solver in 5 seconds...")
     print("Please make sure the Minesweeper game window is visible on your screen!")
-    print(" Press ESC key at any time to stop the solver!")
+    print("Press ESC key at any time to stop the solver!")
     time.sleep(5)
+
+    start_time = time.time()
 
     cx = int(random.randint(0, BOARD_COLS - 1) * CELL_W + CELL_W / 2)
     cy = int(random.randint(0, BOARD_ROWS - 1) * CELL_H + CELL_H / 2)
@@ -34,6 +37,10 @@ def main():
 
     # loop until solver finds nothing new to click or flag
     state = SolverState.FOUND_MOVES
+    img = None
+    flaged_mine_count = 0
+    arr = []
+
     while state != SolverState.DONE:
         if is_escape_pressed():
             print("\nESC key pressed! Exiting solver.")
@@ -89,14 +96,19 @@ def main():
                 state = SolverState.DONE
 
         if is_escape_pressed():
-            print("\n🛑 EMERGENCY STOP: ESC key pressed! Exiting solver.")
+            print("\nESC key pressed! Exiting solver.")
             winsound.Beep(800, 250)
             break
 
         execute_clicks(mine_points, click_points, arr)
 
-    cv.imshow("Display window", img)
-    k = cv.waitKey(0)
+    solve_time = time.time() - start_time
+    is_win = (flaged_mine_count == TOTAL_MINES or (arr and not any(-1 in row for row in arr)))
+    record_game(is_win, solve_time)
+
+    if img is not None:
+        cv.imshow("Display window", img)
+        k = cv.waitKey(0)
 
 if __name__ == "__main__":
     main()

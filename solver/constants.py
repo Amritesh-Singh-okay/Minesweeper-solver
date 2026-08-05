@@ -20,7 +20,7 @@ def load_calibration():
             with open(CALIBRATION_PATH, "r") as f:
                 cal = json.load(f)
             left, top, width, height = cal.get("left", 578), cal.get("top", 287), cal.get("width", 749), cal.get("height", 625)
-            print(f"\n Found saved calibration: Left={left}, Top={top}, Width={width}, Height={height}")
+            print(f"\nFound saved calibration: Left={left}, Top={top}, Width={width}, Height={height}")
             ans = input("   Press ENTER to use saved position, or type 'c' to recalibrate: ").strip().lower()
             if ans == 'c':
                 from calibrate import calibrate
