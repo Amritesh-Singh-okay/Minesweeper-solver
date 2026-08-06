@@ -20,10 +20,10 @@ def is_escape_pressed():
     return (ctypes.windll.user32.GetAsyncKeyState(VK_ESCAPE) & 0x8000) != 0
 
 def main():
-    print("Starting Minesweeper solver in 5 seconds...")
+    print("Starting Minesweeper solver in 6 seconds...")
     print("Please make sure the Minesweeper game window is visible on your screen!")
     print("Hold ESC key at any time to stop the solver!")
-    time.sleep(15)
+    time.sleep(6)
 
     start_time = time.time()
 
