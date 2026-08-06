@@ -3,7 +3,7 @@ import pyautogui
 from enum import Enum
 from pathlib import Path
 
-pyautogui.PAUSE = 0.07
+pyautogui.PAUSE = 0.05
 
 # File paths
 BASE_DIR = Path(__file__).parent.parent

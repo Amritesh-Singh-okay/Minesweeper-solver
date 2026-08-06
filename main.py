@@ -23,7 +23,7 @@ def main():
     print("Starting Minesweeper solver in 5 seconds...")
     print("Please make sure the Minesweeper game window is visible on your screen!")
     print("Hold ESC key at any time to stop the solver!")
-    time.sleep(5)
+    time.sleep(15)
 
     start_time = time.time()
 
