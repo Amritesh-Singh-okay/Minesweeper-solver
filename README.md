@@ -1,6 +1,6 @@
 # Minesweeper Solver
 
-A Python bot that plays Google Minesweeper automatically. It reads the board using OpenCV, figures out safe cells and mines using constraint logic, and clicks them using PyAutoGUI.
+A Python bot that plays Google Minesweeper automatically. It reads the board using OpenCV, deduces safe cells and mines using a 3-tier algorithm (basic constraints, subset subtraction, and probabilistic estimation), and clicks them using PyAutoGUI.
 
 ![Minesweeper Solver Demo](Demo.gif)
 
@@ -8,16 +8,24 @@ A Python bot that plays Google Minesweeper automatically. It reads the board usi
 
 ## Features
 
+- **3-tier solver engine** — Basic constraints, subset subtraction logic, and probabilistic mine estimation
 - **Difficulty selector** — Easy (10x8), Medium (18x14), Expert (24x20)
 - **Screen calibration** — hover over two corners and press Spacebar to map the board region on any monitor
-- **Emergency stop** — press `ESC` at any time to halt the bot
+- **Emergency stop** — hold `ESC` at any time to halt the bot
 - **Win/loss tracker** — logs games, wins, losses, and win rate to `stats.json`
+
+## Solver Logic
+
+- **Tier 1 (Basic Constraints)** — Flags obvious mines when unrevealed neighbors equal the cell number, and clicks safe cells when mine count is satisfied.
+- **Tier 2 (Subset Subtraction)** — Compares overlapping cell sets to deduce hidden safe cells and mines that basic logic misses.
+- **Tier 3 (Probability Guessing)** — Calculates mine probabilities across frontier cells when stuck to make the safest guess.
 
 ## Project Structure
 
 ```
 Minesweeper/
 ├── solver/
+│   ├── __init__.py    # Package marker
 │   ├── constants.py   # Board dimensions, color ranges, calibration loader
 │   ├── vision.py      # Screenshot capture and cell color detection
 │   ├── solver.py      # Constraint solving and mouse click execution
